@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{Write a short summary, because Rubygems requires one.}
   spec.description   = %q{Write a longer description or delete this line.}
 
-  spec.homepage      = "https://github.com/[my-github-username]/huginn_git_agent"
+  spec.homepage      = "https://github.com/haxwithaxe/huginn_git_metadata_agent"
 
   spec.license       = "MIT"
 
@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
 
   spec.add_runtime_dependency "huginn_agent"
+  spec.add_runtime_dependency "git"
 end
