@@ -218,15 +218,14 @@ module Agents
       else
         output['diff_stats'] = git.diff(before.last_commit, before.last_commit).stats
       end
-      output['current_tags'] = git.tags.map { |t| t.name }
       branches_diff = diff_branch_lists(before.branches, after.branches)
-      output['new_branches'] = branches_diff['added'].map { |b| b.name }
-      output['removed_branches'] = branches_diff['removed'].map { |b| b.name }
+      output['new_branches'] = branches_diff['added'].map { |b| b.to_h }
+      output['removed_branches'] = branches_diff['removed'].map { |b| b.to_h }
       output['current_branches'] = branches_diff['reconciled'].map { |b| b.to_h }
       output['changed'] = branches_diff['changed'] or output['changed']
       tags_diff = diff_tag_lists(before.tags, after.tags)
-      output['new_tags'] = tags_diff['added'].map { |t| t.name }
-      output['removed_tags'] = tags_diff['removed'].map { |t| t.name }
+      output['new_tags'] = tags_diff['added'].map { |t| t.to_h }
+      output['removed_tags'] = tags_diff['removed'].map { |t| t.to_h }
       output['current_tags'] = tags_diff['reconciled'].map { |t| t.to_h }
       output['changed'] = tags_diff['changed'] or output['changed']
       return output
