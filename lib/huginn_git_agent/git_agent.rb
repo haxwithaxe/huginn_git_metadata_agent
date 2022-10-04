@@ -359,6 +359,7 @@ module Agents
       # Takes a `Branch` instance as an argument.
       def update(branch)
         @updated_last_commit = branch.last_commit
+        @updated_last_commit.sha  # Accessing attributes of the commit now ensures the correct value
         return self
       end
 
@@ -390,18 +391,22 @@ module Agents
       end
 
       def to_h
+        changed = false
+        before = @last_commit or @updated_last_commit
+        after = @updated_last_commit or @last_commit
         # Get the diff stats even if there is no change
-        if not @updated_last_commit or @updated_last_commit.sha == @last_commit.sha
-          changed = false
-        else
+        if after.sha != before.sha
           changed = true
         end
-        diff_stats = @git.diff(@last_commit, @updated_last_commit).stats
+        if @last_commit.nil? or @updated_last_commit.nil?
+          changed = true
+        end
+        diff_stats = @git.diff(before, after).stats
         {
           'changed' => changed,
           'name' => @branch_name,
-          'prev_last_commit' => commit_to_hash(@last_commit), 
-          'new_last_commit' => commit_to_hash(@updated_last_commit), 
+          'prev_last_commit' => commit_to_hash(@last_commit),
+          'new_last_commit' => commit_to_hash(@updated_last_commit),
           'log' => self.log_for_commits(@last_commit, @updated_last_commit),
           'diff_stats' => diff_stats
         }
