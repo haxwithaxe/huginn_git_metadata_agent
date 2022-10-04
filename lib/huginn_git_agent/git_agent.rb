@@ -326,7 +326,7 @@ module Agents
       # Update the state of the tag to reflect a change in tag commit.
       # Takes a `Tag` instance as an argument.
       def update(other)
-        if @name == other.name and @sha != other.sha
+        if other and @name == other.name and @sha != other.sha
           @moved_to = other.sha
         end
         return self
@@ -343,6 +343,7 @@ module Agents
         @git = git
         @branch_name = branch.name
         @last_commit = branch.gcommit
+        @last_commit.sha  # Accessing attributes of the commit now ensures the correct value
         @updated_last_commit = nil
       end
 
@@ -365,12 +366,18 @@ module Agents
         if not commit
           return nil
         end
-        {'sha' => commit.sha.sub('warning: refname \'HEAD\' is ambiguous.\n', ''), 'message' => commit.message, 
-         'author' => {'name' => commit.author.name, 'email' => commit.author.email},
-         'date' => commit.date.to_s}
+        {
+          'sha' => commit.sha.sub('warning: refname \'HEAD\' is ambiguous.\n', ''),
+          'message' => commit.message, 
+          'author' => {'name' => commit.author.name, 'email' => commit.author.email},
+          'date' => commit.date.to_s
+        }
       end
 
       def log_for_commits(before_commit, after_commit)
+        if not after_commit and not before_commit
+          return []
+        end
         if not after_commit or before_commit.sha == after_commit.sha
           return [commit_to_hash(before_commit)]
         end
@@ -384,13 +391,14 @@ module Agents
 
       def to_h
         # Get the diff stats even if there is no change
-        if @updated_last_commit
-          diff_stats = @git.diff(@last_commit, @updated_last_commit).stats
+        if not @updated_last_commit or @updated_last_commit.sha == @last_commit.sha
+          changed = false
         else
-          diff_stats = @git.diff(@last_commit, @last_commit).stats
+          changed = true
         end
+        diff_stats = @git.diff(@last_commit, @updated_last_commit).stats
         {
-          'changed' => @last_commit.sha != @updated_last_commit.sha,
+          'changed' => changed,
           'name' => @branch_name,
           'prev_last_commit' => commit_to_hash(@last_commit), 
           'new_last_commit' => commit_to_hash(@updated_last_commit), 
@@ -408,8 +416,8 @@ module Agents
       def initialize(git_obj)
         @branches = []
         @tags = []
-        @branches = git_obj.branches.map { |b| Branch.new(git_obj, b) }
-        @tags = git_obj.tags.map { |t| Tag.new(t) }
+        @branches = git_obj.branches.map { |b| Branch.new(git_obj, b) unless b.nil? }
+        @tags = git_obj.tags.map { |t| Tag.new(t) unless t.nil? }
         # The most recent commit of all branches
         @last_commit = self._last_commit() # Must be after @branches init
       end
